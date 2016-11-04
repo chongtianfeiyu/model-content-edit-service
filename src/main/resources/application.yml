@@ -17,10 +17,10 @@ spring:
 security:
   oauth2:
     resource:
-      userInfoUri: http://user.openec.zyhao.com:8383/eaa/user
+      userInfoUri: http://user.openec.zyhao.com:8282/saa/user
     client:
       client-id: acme
-      access-token-uri: http://openec.zyhao.com:8789
+      access-token-uri: http://openec.zyhao.com:8788
   ignored: /v1/**/noauth/**
 eureka:
   instance:
