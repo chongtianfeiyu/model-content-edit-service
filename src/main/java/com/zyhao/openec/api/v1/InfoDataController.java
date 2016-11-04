@@ -2,7 +2,9 @@ package com.zyhao.openec.api.v1;
 
 import java.util.List;
 import java.util.Optional;
+
 import javax.annotation.Resource;
+
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +14,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.zyhao.openec.entity.InfoData;
 import com.zyhao.openec.entity.InfoPlan;
 import com.zyhao.openec.repository.InfoDataRepository;
@@ -83,20 +85,7 @@ public class InfoDataController {
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
-	/**
-	 * 根据ID查询
-	 * @return
-	 * @throws Exception
-	 */
-	@Transactional
-	@RequestMapping(path="/infodata/noauth/{id}/{storeId}",method = RequestMethod.GET)
-	public ResponseEntity<List<InfoData>> findByTempIdNoAuth(@PathVariable("id") String id,@PathVariable("storeId") Long storedId) throws Exception {
-		logger.info("come into method findByTempIdNoAuth with params:id="+id+" storedId is "+storedId);
-		
-		return Optional.ofNullable(infoDataRepository.findByStoreIdAndInfoPlanId(storedId,id))
-	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
-	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
-	}
+	
 	/**
 	 * 创建
 	 * @param infoDate
@@ -165,19 +154,6 @@ public class InfoDataController {
 		logger.info("come into method findInfoPlan");
 		User authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
 		return Optional.ofNullable(infoPlanRepository.findByIdAndStoreId(id,authenticatedUser.getId()))
-	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
-	                .orElseThrow(() -> new Exception("Could not find InfoPlan list"));
-	}
-	
-	/**
-	 * 查询方案
-	 * TODO 认证
-	 */
-	@Transactional
-	@RequestMapping(path="/plan/noauth/{id}",method=RequestMethod.GET)
-	public ResponseEntity findInfoPlanNoauth(@PathVariable("id") Long id) throws Exception {
-		logger.info("come into method findInfoPlan");
-		return Optional.ofNullable(infoPlanRepository.findOne(id))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoPlan list"));
 	}
