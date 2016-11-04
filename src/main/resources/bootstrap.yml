@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: model-content-service
+server:
+  port: 8027
+---
+spring:
+  profiles: docker
+  cloud:
+    config:
+      uri: http://openec.zyhao.com:8888
+---
+spring:
+  profiles: default
+  cloud:
+    config:
+      uri: http://openec.zyhao.com:8888
+spring.profiles.active: development
+---
+spring:
+  profiles: cloud
+  cloud:
+    config:
+      uri: ${vcap.services.config-service.credentials.uri:http://openec.zyhao.com:8888}
+
