@@ -20,9 +20,9 @@ import com.zyhao.openec.entity.InfoData;
 import com.zyhao.openec.entity.InfoPlan;
 import com.zyhao.openec.entity.InfoTemplete;
 import com.zyhao.openec.entity.ModelPojo;
+import com.zyhao.openec.entity.SellerUser;
 import com.zyhao.openec.repository.InfoDataRepository;
 import com.zyhao.openec.repository.InfoTempleteRepository;
-import com.zyhao.openec.user.User;
 
 /**
  * The {@link InfoDataServiceV1} implements business logic for aggregating the state of
@@ -57,9 +57,9 @@ public class InfoDataServiceV1 {
      *
      * @return the currently authenticated user
      */
-    public User getAuthenticatedUser() {
+    public SellerUser getAuthenticatedUser() {
     	log.info("----------------------------------");
-        return oAuth2RestTemplate.getForObject("http://employee-service/eaa/v1/me",User.class);
+        return oAuth2RestTemplate.getForObject("http://seller-service/saa/v1/me",SellerUser.class);
     }
     
     /**
@@ -76,7 +76,7 @@ public class InfoDataServiceV1 {
 		model.setOutFileName(activePlan.getOutFileName());
 		
 		try{
-			User user = getAuthenticatedUser();
+			SellerUser user = getAuthenticatedUser();
 			
 			if(user == null){
 				log.error("createStaticTemplateFile method run failed ,no login");
@@ -93,7 +93,7 @@ public class InfoDataServiceV1 {
 		HttpHeaders headers = new HttpHeaders();
 		MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
 		headers.setContentType(type);
-		HttpEntity<ModelPojo > formEntity = new HttpEntity<ModelPojo>(model, headers);
+		HttpEntity<ModelPojo> formEntity = new HttpEntity<ModelPojo>(model, headers);
 		String result = restTemplate.postForObject("http://static-service/v1/makeIndexTemplate", formEntity,String.class);
 		if(!"SUCCESS".equals(result)){
 			log.error("createStaticTemplateFile method run failed,static-service run error");
@@ -113,7 +113,7 @@ public class InfoDataServiceV1 {
 	public InfoPlan createStaticTemplateFileByCMD(InfoPlan activePlan) throws Exception{
 		
 		try{
-			User user = getAuthenticatedUser();
+			SellerUser user = getAuthenticatedUser();
 			
 			if(user == null){
 				log.error("createStaticTemplateFileByCMD method run failed ,no login");
@@ -140,5 +140,42 @@ public class InfoDataServiceV1 {
 		log.info("createStaticTemplateFile run result is "+result);
 		
 		return activePlan;
+	}
+	
+	/**
+	 * 展示和预览方案
+	 * @param infoplan
+	 * @return
+	 * @throws Exception 
+	 */
+	public InfoPlan createTempStaticTemplateFileByCMD(InfoPlan infoplan) throws Exception {
+		try{
+			SellerUser user = getAuthenticatedUser();
+			
+			if(user == null){
+				log.error("createTempStaticTemplateFileByCMD method run failed ,no login");
+				//throw new Exception("no login");
+			}
+			log.info("createTempStaticTemplateFileByCMD run user is "+user.getId());
+		}catch(Exception ex){
+			ex.printStackTrace();
+			throw ex;
+		}
+		ActionPojo action = new ActionPojo();
+		action.setAction("modelContentService.showTemplate");
+		action.setParam(infoplan.getId());
+		
+		HttpHeaders headers = new HttpHeaders();
+		MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
+		headers.setContentType(type);
+		HttpEntity<ActionPojo > formEntity = new HttpEntity<ActionPojo>(action, headers);
+		String result = restTemplate.postForObject("http://static-service/v1/makeTemplateByCmd", formEntity,String.class);
+		if(!"SUCCESS".equals(result)){
+			log.error("createStaticTemplateFile method run failed,static-service run error");
+			throw new Exception("static-service run error");
+		}
+		log.info("createStaticTemplateFile run result is "+result);
+		
+		return infoplan;
 	}
 }

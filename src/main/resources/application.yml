@@ -57,7 +57,7 @@ eureka:
 ---
 spring:
   application:
-    name: account-service
+    name: model-content-edit-service
   profiles: test
   jpa:
     show_sql: false

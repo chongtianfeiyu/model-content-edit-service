@@ -1,6 +1,9 @@
 package com.zyhao.openec.api.v1;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Resource;
@@ -18,9 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.zyhao.openec.entity.InfoData;
 import com.zyhao.openec.entity.InfoPlan;
+import com.zyhao.openec.entity.InfoTemplete;
+import com.zyhao.openec.entity.SellerUser;
 import com.zyhao.openec.repository.InfoDataRepository;
 import com.zyhao.openec.repository.InfoPlanRepository;
-import com.zyhao.openec.user.User;
+import com.zyhao.openec.repository.InfoTempleteRepository;
 
 
 /**
@@ -40,7 +45,9 @@ public class InfoDataController {
 	private InfoDataServiceV1 infoDataServiceV1;
 	@Resource
 	private InfoPlanRepository infoPlanRepository;
-	
+	@Resource
+	private InfoTempleteRepository infoTempleteRepository;
+
 	/**
 	 * 查询所有
 	 * @return
@@ -49,9 +56,9 @@ public class InfoDataController {
 	@RequestMapping(path="/infodata/all",method = RequestMethod.GET)
 	public ResponseEntity<List<InfoData>> findAllInfoData() throws Exception {
 		logger.info("come into method findAllInfoData");
-		User authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
 		
-		return Optional.ofNullable(infoDataRepository.findByStoreId(Long.valueOf(authenticatedUser.getId())))
+		return Optional.ofNullable(infoDataRepository.findByStoreId(Long.valueOf(authenticatedUser.getStoreId())))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
@@ -64,8 +71,8 @@ public class InfoDataController {
 	@RequestMapping(path="/infodata/byInfoPlanId/{planId}",method = RequestMethod.GET)
 	public ResponseEntity<List<InfoData>> findByInfoPlanId(@PathVariable("planId") String planId) throws Exception {
 		logger.info("come into method findAllInfoData");
-		User authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		return Optional.ofNullable(infoDataRepository.findByStoreIdAndInfoPlanId(authenticatedUser.getId(),planId))
+		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		return Optional.ofNullable(infoDataRepository.findByStoreIdAndInfoPlanId(authenticatedUser.getStoreId(),planId))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
@@ -79,9 +86,9 @@ public class InfoDataController {
 	@RequestMapping(path="/infodata/{id}",method = RequestMethod.GET)
 	public ResponseEntity<InfoData> findByTempId(@PathVariable("id") Long id) throws Exception {
 		logger.info("come into method findByTempId with params:id="+id);
-		User authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
 		
-		return Optional.ofNullable(infoDataRepository.findByIdAndStoreId(id,Long.valueOf(authenticatedUser.getId())))
+		return Optional.ofNullable(infoDataRepository.findByIdAndStoreId(id,Long.valueOf(authenticatedUser.getStoreId())))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
@@ -95,9 +102,12 @@ public class InfoDataController {
 	 */
 	@Transactional
 	@RequestMapping(path="/infodata/new",method=RequestMethod.POST)
-	public ResponseEntity<InfoData> saveInfoData(@Validated @RequestBody InfoData infoDate) throws Exception {
-		logger.info("come into method saveInfoData with params: "+infoDate.toString());
-		 return Optional.ofNullable(infoDataRepository.save(infoDate))
+	public ResponseEntity<InfoData> saveInfoData(@Validated @RequestBody InfoData infoData) throws Exception {
+		logger.info("come into method saveInfoData with params: "+infoData.toString());
+		infoData.setType("2");//类型1-平台，2-商店
+		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		infoData.setStoreId(authenticatedUser.getStoreId());
+		 return Optional.ofNullable(infoDataRepository.save(infoData))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find a InfoData"));
 	}
@@ -152,8 +162,13 @@ public class InfoDataController {
 	@RequestMapping(path="/plan/one/{id}",method=RequestMethod.GET)
 	public ResponseEntity findInfoPlan(@PathVariable("id") Long id) throws Exception {
 		logger.info("come into method findInfoPlan");
-		User authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		return Optional.ofNullable(infoPlanRepository.findByIdAndStoreId(id,authenticatedUser.getId()))
+		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		InfoPlan findByIdAndStoreId = infoPlanRepository.findByIdAndStoreId(id,authenticatedUser.getStoreId());
+		InfoTemplete findOne = infoTempleteRepository.findOne(Long.valueOf(findByIdAndStoreId.getInfoTempleteId()));
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put("InfoPlan", findByIdAndStoreId);
+		map.put("InfoTemplat", findOne);
+		return Optional.ofNullable(map)
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoPlan list"));
 	}
@@ -166,8 +181,17 @@ public class InfoDataController {
 	@RequestMapping(path="/plan/all",method=RequestMethod.GET)
 	public ResponseEntity findAllInfoPlan() throws Exception {
 		logger.info("come into method findAllInfoPlan");
-		User authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		return Optional.ofNullable(infoPlanRepository.findByStoreId(authenticatedUser.getId()))
+		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		List<InfoPlan> findByStoreId = infoPlanRepository.findByStoreId(authenticatedUser.getStoreId());
+		List<Map<String,Object>> list = new ArrayList<Map<String,Object>>();
+		for (InfoPlan infoPlan : findByStoreId) {
+			InfoTemplete findOne = infoTempleteRepository.findOne(Long.valueOf(infoPlan.getInfoTempleteId()));
+			Map<String,Object> map = new HashMap<String,Object>();
+			map.put("InfoPlan", infoPlan);
+			map.put("InfoTemplat", findOne);
+			list.add(map);
+		}
+		return Optional.ofNullable(list)
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoPlan list"));
 	}
@@ -179,6 +203,12 @@ public class InfoDataController {
 	@RequestMapping(path="/plan/new",method=RequestMethod.POST)
 	public ResponseEntity saveInfoPlan(@RequestBody InfoPlan infoPlan) throws Exception {
 		logger.info("come into method saveInfoPlan");
+		infoPlan.setType("2");//类型1-平台，2-商店
+		infoPlan.setOutFileName("index.html");
+		infoPlan.setActive("0");
+		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		infoPlan.setStoreId(authenticatedUser.getStoreId());
+		
 		return Optional.ofNullable(infoPlanRepository.save(infoPlan))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not save infoPlan "));
@@ -195,6 +225,9 @@ public class InfoDataController {
 		if(findOne == null){
 			throw new Exception("Could not save infoPlan ");
 		}
+		findOne.setInfoTempleteId(infoPlan.getInfoTempleteId());
+		findOne.setName(infoPlan.getName());
+		infoPlan.setType("2");
 		return Optional.ofNullable(infoPlanRepository.save(infoPlan))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not save infoPlan "));
@@ -208,8 +241,8 @@ public class InfoDataController {
 	public ResponseEntity<InfoPlan> activePlan(@RequestBody InfoPlan infoplan) throws Exception {
 		logger.info("activePlan method run params infoplan is "+infoplan.toString());
 		//1.找到激活的模板内容
-		User authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		List<InfoPlan> findAll = infoPlanRepository.findByStoreId(authenticatedUser.getId());
+		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		List<InfoPlan> findAll = infoPlanRepository.findByStoreId(authenticatedUser.getStoreId());
 		for (InfoPlan plan : findAll) {
 			if(!infoplan.getId().equals(plan.getId())){
 				plan.setActive("0");//是否激活-1-禁用  0-不激活，1-激活（只能激活一个
@@ -230,5 +263,23 @@ public class InfoDataController {
 		return new ResponseEntity<InfoPlan>(infoplan,HttpStatus.OK);
 	}
 	
-	
+	/**
+	 * 预览方案，静态化的处理
+	 */
+	@Transactional
+	@RequestMapping(path="/showPlan",method=RequestMethod.POST)
+	public ResponseEntity<InfoPlan> showPlan(@RequestBody InfoPlan infoplan) throws Exception {
+		logger.info("showPlan method run params infoplan is "+infoplan.toString());
+		//1.找到激活的模板内容
+		logger.info("showPlan method active activeData is "+infoplan.toString());
+		//2.静态化处理 模板名称,模板数据,输出路径
+		try{
+			//infoplan = infoDataServiceV1.createStaticTemplateFile(infoplan);
+			infoplan = infoDataServiceV1.createTempStaticTemplateFileByCMD(infoplan);
+		}catch(Exception ex){
+			ex.printStackTrace();
+			throw ex;
+		}
+		return new ResponseEntity<InfoPlan>(infoplan,HttpStatus.OK);
+	}
 }

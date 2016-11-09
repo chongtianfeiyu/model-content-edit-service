@@ -1,8 +1,8 @@
 spring:
   application:
-    name: model-content-service
+    name: model-content-edit-service
 server:
-  port: 8027
+  port: 8213
 ---
 spring:
   profiles: docker
