@@ -9,6 +9,9 @@ import java.util.Optional;
 import javax.annotation.Resource;
 
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.zyhao.openec.entity.InfoData;
@@ -281,5 +285,22 @@ public class InfoDataController {
 			throw ex;
 		}
 		return new ResponseEntity<InfoPlan>(infoplan,HttpStatus.OK);
+	}
+	
+	/**
+	 * 查询所有模板
+	 * TODO 认证
+	 */
+	@Transactional
+	@RequestMapping(path="/template/all",method=RequestMethod.GET)
+	public ResponseEntity findAllInfoTemplate(
+			@RequestParam("page") int page,
+			@RequestParam("size") int size) throws Exception {
+		logger.info("come into method findAllInfoTemplate");
+		Pageable pageable = new PageRequest(page, size);
+		Page<InfoTemplete> findAll = infoTempleteRepository.findAll(pageable);
+		return Optional.ofNullable(findAll)
+	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
+	                .orElseThrow(() -> new Exception("Could not find InfoPlan list"));
 	}
 }
