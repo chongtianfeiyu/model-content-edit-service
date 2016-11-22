@@ -169,7 +169,7 @@ public class InfoDataServiceV1 {
 		MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
 		headers.setContentType(type);
 		HttpEntity<ActionPojo > formEntity = new HttpEntity<ActionPojo>(action, headers);
-		String result = restTemplate.postForObject("http://static-service/v1/makeTemplateByCmd", formEntity,String.class);
+		String result = restTemplate.postForObject("http://static-service/nologin/makeTemplateByCmd", formEntity,String.class);
 		if(!"SUCCESS".equals(result)){
 			log.error("createStaticTemplateFile method run failed,static-service run error");
 			throw new Exception("static-service run error");
