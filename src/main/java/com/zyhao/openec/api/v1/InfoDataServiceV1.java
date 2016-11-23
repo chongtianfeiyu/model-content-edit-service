@@ -62,48 +62,6 @@ public class InfoDataServiceV1 {
         return oAuth2RestTemplate.getForObject("http://seller-service/saa/v1/me",SellerUser.class);
     }
     
-    /**
-     * 调用静态化的公共服务方法,生成首页静态模板文件
-     * @param activeData
-     * @return
-     * @throws Exception
-     */
-	public InfoPlan createStaticTemplateFile(InfoPlan activePlan) throws Exception{
-		
-		InfoTemplete findOne = infoTempleteRepository.findOne(Long.valueOf(activePlan.getInfoTempleteId()));
-		ModelPojo model = new ModelPojo();
-		model.setModelName(findOne.getFilePath());
-		model.setOutFileName(activePlan.getOutFileName());
-		
-		try{
-			SellerUser user = getAuthenticatedUser();
-			
-			if(user == null){
-				log.error("createStaticTemplateFile method run failed ,no login");
-				//throw new Exception("no login");
-			}
-			log.info("createStaticTemplateFile run user is "+user.getId());
-			List<InfoData> findByStoreIdAndInfoPlanId = infoDataRepository.findByStoreIdAndInfoPlanId(Long.valueOf(user.getId()),String.valueOf(activePlan.getId()));
-			model.setData(findByStoreIdAndInfoPlanId);
-		}catch(Exception ex){
-			ex.printStackTrace();
-			throw ex;
-		}
-		
-		HttpHeaders headers = new HttpHeaders();
-		MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
-		headers.setContentType(type);
-		HttpEntity<ModelPojo> formEntity = new HttpEntity<ModelPojo>(model, headers);
-		String result = restTemplate.postForObject("http://static-service/v1/makeIndexTemplate", formEntity,String.class);
-		if(!"SUCCESS".equals(result)){
-			log.error("createStaticTemplateFile method run failed,static-service run error");
-			throw new Exception("static-service run error");
-		}
-		log.info("createStaticTemplateFile run result is "+result);
-		
-		return activePlan;
-	}
-	
 	/**
      * 调用静态化的公共服务方法,生成首页静态模板文件
      * @param activeData
