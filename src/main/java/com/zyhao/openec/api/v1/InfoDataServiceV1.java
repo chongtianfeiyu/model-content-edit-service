@@ -162,7 +162,7 @@ public class InfoDataServiceV1 {
 			throw ex;
 		}
 		ActionPojo action = new ActionPojo();
-		action.setAction("modelContentService.showTemplate");
+		action.setAction("modelContentEditService.showTemplate");
 		action.setParam(infoplan.getId());
 		
 		HttpHeaders headers = new HttpHeaders();
