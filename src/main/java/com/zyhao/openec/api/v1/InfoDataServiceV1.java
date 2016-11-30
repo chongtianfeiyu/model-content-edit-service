@@ -1,7 +1,5 @@
 package com.zyhao.openec.api.v1;
 
-import java.util.List;
-
 import javax.annotation.Resource;
 
 import org.apache.commons.logging.Log;
@@ -16,10 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.zyhao.openec.entity.ActionPojo;
-import com.zyhao.openec.entity.InfoData;
 import com.zyhao.openec.entity.InfoPlan;
-import com.zyhao.openec.entity.InfoTemplete;
-import com.zyhao.openec.entity.ModelPojo;
 import com.zyhao.openec.entity.SellerUser;
 import com.zyhao.openec.repository.InfoDataRepository;
 import com.zyhao.openec.repository.InfoTempleteRepository;

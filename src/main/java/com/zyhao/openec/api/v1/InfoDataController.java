@@ -149,6 +149,41 @@ public class InfoDataController {
 	}
 	
 	/**
+	 * 上移或者下移
+	 * TODO 认证
+	 */
+	@Transactional
+	@RequestMapping(path="/infodata/batchUpdate",method=RequestMethod.POST)
+	public ResponseEntity updateBatchInfoData(@Validated @RequestBody List<InfoData> infoData) throws Exception {
+		logger.info("come into method updateBatchInfoData with params: "+infoData.toString());
+		for (InfoData data : infoData) {
+			InfoData findOne = infoDataRepository.findOne(data.getId());
+			if(findOne == null){
+				logger.error("come into method updateBatchInfoData update info data error,cannot find data"+data.toString());
+				throw new Exception("Could not find a InfoData");
+			}
+			if(data.getSort() != null && !"".equals(data.getSort())){
+			    findOne.setSort(data.getSort());
+			}
+			if(data.getHref() != null && !"".equals(data.getHref())){
+			    findOne.setHref(data.getHref());
+			}
+			if(data.getData() != null && !"".equals(data.getData())){
+			    findOne.setData(data.getData());
+			}
+			if(data.getPath() != null && !"".equals(data.getPath())){
+			    findOne.setPath(data.getPath());
+			}
+			if(data.getName() != null && !"".equals(data.getName())){
+			    findOne.setName(data.getName());
+			}
+			infoDataRepository.save(findOne);
+		}
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+	
+	
+	/**
 	 * 删除方案
 	 * TODO 认证
 	 */
@@ -302,5 +337,11 @@ public class InfoDataController {
 		return Optional.ofNullable(findAll)
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoPlan list"));
+	}
+	
+	@Transactional
+	@RequestMapping(path="/nologin/all",method = RequestMethod.GET)
+	public ResponseEntity nologin(){
+		return new ResponseEntity("success",HttpStatus.OK);
 	}
 }
