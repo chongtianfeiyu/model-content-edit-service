@@ -1,4 +1,4 @@
-package com.zyhao.openec.api.v1;
+package com.zyhao.openec.api.v2;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.zyhao.openec.api.v1.InfoDataServiceV1;
 import com.zyhao.openec.entity.InfoData;
 import com.zyhao.openec.entity.InfoPlan;
 import com.zyhao.openec.entity.InfoTemplate;
@@ -31,19 +32,17 @@ import com.zyhao.openec.repository.InfoDataRepository;
 import com.zyhao.openec.repository.InfoPlanRepository;
 import com.zyhao.openec.repository.InfoTempleteRepository;
 
-
 /**
  * 
  * Title:InfoDataController 
- * Desc: 商户 模板内容管理:数据库 用户和小区是一对一的查询，用户和物业一对多，物业和小区一对多的查询
+ * Desc: 增加物业和用户一对多
  * @author Administrator
- * @date 2016年12月17日 上午11:02:28
+ * @date 2016年12月17日 上午11:04:52
  */
 @RestController
-@RequestMapping("/v1")
+@RequestMapping("/v2")
 public class InfoDataController {
-
-	private Log logger = LogFactory.getLog(InfoDataController.class);
+private Log logger = LogFactory.getLog(InfoDataController.class);
 	
 	@Resource
 	private InfoDataRepository infoDataRepository;
@@ -54,8 +53,9 @@ public class InfoDataController {
 	@Resource
 	private InfoTempleteRepository infoTempleteRepository;
 
+	
 	/**
-	 * 查询所有
+	 * 查询所有物业下的内容
 	 * @return
 	 */
 	@Transactional
@@ -64,13 +64,13 @@ public class InfoDataController {
 		logger.info("come into method findAllInfoData");
 		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
 		
-		return Optional.ofNullable(infoDataRepository.findByStoreId(Long.valueOf(authenticatedUser.getStoreId())))
+		return Optional.ofNullable(infoDataRepository.findByEstateId(authenticatedUser.getEstateId()))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
 	
 	/**
-	 * 查询所有
+	 * 查询物业下的方案
 	 * @return
 	 */
 	@Transactional
@@ -78,13 +78,13 @@ public class InfoDataController {
 	public ResponseEntity<List<InfoData>> findByInfoPlanId(@PathVariable("planId") String planId) throws Exception {
 		logger.info("come into method findAllInfoData");
 		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		return Optional.ofNullable(infoDataRepository.findByStoreIdAndInfoPlanId(authenticatedUser.getStoreId(),planId))
+		return Optional.ofNullable(infoDataRepository.findByEstateIdAndInfoPlanId(authenticatedUser.getEstateId(),planId))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
 	
 	/**
-	 * 根据ID查询
+	 * 根据ID查询该物业的内容
 	 * @return
 	 * @throws Exception
 	 */
@@ -94,13 +94,34 @@ public class InfoDataController {
 		logger.info("come into method findByTempId with params:id="+id);
 		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
 		
-		return Optional.ofNullable(infoDataRepository.findByIdAndStoreId(id,Long.valueOf(authenticatedUser.getStoreId())))
+		return Optional.ofNullable(infoDataRepository.findByIdAndEstateId(id,authenticatedUser.getEstateId()))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
 	
+//	/**
+//	 * 创建店铺内容
+//	 * @param infoDate
+//	 * @return
+//	 * @throws Exception
+//	 *TODO 版本号获取及规则是否向上兼容 || 认证
+//	 */
+//	@Transactional
+//	@RequestMapping(path="/infodata/new",method=RequestMethod.POST)
+//	public ResponseEntity<InfoData> saveInfoData(@Validated @RequestBody InfoData infoData) throws Exception {
+//		logger.info("come into method saveInfoData with params: "+infoData.toString());
+//		infoData.setType("2");//类型1-平台，2-商店
+//		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+//		infoData.setEstateId(authenticatedUser.getEstateId());
+//		infoData.setUserId(""+authenticatedUser.getId());
+//		infoData.setStoreId(authenticatedUser.getStoreId());
+//		return Optional.ofNullable(infoDataRepository.save(infoData))
+//	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
+//	                .orElseThrow(() -> new Exception("Could not find a InfoData"));
+//	}
+	
 	/**
-	 * 创建
+	 * 创建物业内容
 	 * @param infoDate
 	 * @return
 	 * @throws Exception
@@ -110,30 +131,10 @@ public class InfoDataController {
 	@RequestMapping(path="/infodata/new",method=RequestMethod.POST)
 	public ResponseEntity<InfoData> saveInfoData(@Validated @RequestBody InfoData infoData) throws Exception {
 		logger.info("come into method saveInfoData with params: "+infoData.toString());
-		infoData.setType("2");//类型1-平台，2-商店
 		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-//		infoData.setStoreId(authenticatedUser.getStoreId());
+		infoData.setEstateId(authenticatedUser.getEstateId());
 		infoData.setUserId(""+authenticatedUser.getId());
-		return Optional.ofNullable(infoDataRepository.save(infoData))
-	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
-	                .orElseThrow(() -> new Exception("Could not find a InfoData"));
-	}
-	
-	/**
-	 * 创建
-	 * @param infoDate
-	 * @return
-	 * @throws Exception
-	 *TODO 版本号获取及规则是否向上兼容 || 认证
-	 */
-	@Transactional
-	@RequestMapping(path="/infodata/new2",method=RequestMethod.POST)
-	public ResponseEntity<InfoData> saveInfoData2(@Validated @RequestBody InfoData infoData) throws Exception {
-		logger.info("come into method saveInfoData with params: "+infoData.toString());
-//		infoData.setType("2");//类型1-平台，2-商店
-//		infoData.setStoreId(authenticatedUser.getStoreId());
-		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		infoData.setUserId(""+authenticatedUser.getId());
+		infoData.setStoreId(authenticatedUser.getStoreId());
 		return Optional.ofNullable(infoDataRepository.save(infoData))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find a InfoData"));
@@ -218,7 +219,7 @@ public class InfoDataController {
 		return new ResponseEntity(HttpStatus.OK);
 	}
 	/**
-	 * 查询方案
+	 * 查询该物业下的方案
 	 * TODO 认证
 	 */
 	@Transactional
@@ -226,7 +227,7 @@ public class InfoDataController {
 	public ResponseEntity findInfoPlan(@PathVariable("id") Long id) throws Exception {
 		logger.info("come into method findInfoPlan");
 		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		InfoPlan findByIdAndStoreId = infoPlanRepository.findByIdAndStoreId(id,authenticatedUser.getStoreId());
+		InfoPlan findByIdAndStoreId = infoPlanRepository.findByIdAndEstateId(id,authenticatedUser.getEstateId());
 		InfoTemplate findOne = infoTempleteRepository.findOne(Long.valueOf(findByIdAndStoreId.getInfoTempleteId()));
 		Map<String,Object> map = new HashMap<String,Object>();
 		map.put("InfoPlan", findByIdAndStoreId);
@@ -237,7 +238,7 @@ public class InfoDataController {
 	}
 	
 	/**
-	 * 查询所有方案
+	 * 查询所有物业下的方案
 	 * TODO 认证
 	 */
 	@Transactional
@@ -245,7 +246,7 @@ public class InfoDataController {
 	public ResponseEntity findAllInfoPlan() throws Exception {
 		logger.info("come into method findAllInfoPlan");
 		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		List<InfoPlan> findByStoreId = infoPlanRepository.findByStoreId(authenticatedUser.getStoreId());
+		List<InfoPlan> findByStoreId = infoPlanRepository.findByEstateId(authenticatedUser.getEstateId());
 		List<Map<String,Object>> list = new ArrayList<Map<String,Object>>();
 		for (InfoPlan infoPlan : findByStoreId) {
 			InfoTemplate findOne = infoTempleteRepository.findOne(Long.valueOf(infoPlan.getInfoTempleteId()));
@@ -266,37 +267,17 @@ public class InfoDataController {
 	@RequestMapping(path="/plan/new",method=RequestMethod.POST)
 	public ResponseEntity saveInfoPlan(@RequestBody InfoPlan infoPlan) throws Exception {
 		logger.info("come into method saveInfoPlan");
-		infoPlan.setType("2");//类型1-平台，2-商店
 		infoPlan.setOutFileName("index.html");
 		infoPlan.setActive("0");
 		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-//		infoPlan.setStoreId(authenticatedUser.getStoreId());
+		infoPlan.setEstateId(authenticatedUser.getEstateId());
 		infoPlan.setUserId(""+authenticatedUser.getId());
+		infoPlan.setStoreId(authenticatedUser.getStoreId());
 		return Optional.ofNullable(infoPlanRepository.save(infoPlan))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not save infoPlan "));
 	}
 	
-	/**
-	 * 保存方案
-	 * TODO 认证
-	 */
-	@Transactional
-	@RequestMapping(path="/plan/new2",method=RequestMethod.POST)
-	public ResponseEntity saveInfoPlan2(@RequestBody InfoPlan infoPlan) throws Exception {
-		logger.info("come into method saveInfoPlan");
-		//infoPlan.setType("3");//类型1-平台，2-商店
-//		infoPlan.setStoreId(authenticatedUser.getStoreId());
-		
-		infoPlan.setOutFileName("index.html");
-		infoPlan.setActive("0");
-		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-        infoPlan.setEstateId(authenticatedUser.getEstateId());
-		infoPlan.setUserId(""+authenticatedUser.getId());
-		return Optional.ofNullable(infoPlanRepository.save(infoPlan))
-	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
-	                .orElseThrow(() -> new Exception("Could not save infoPlan "));
-	}
 	
 	/**
 	 * 修改方案
@@ -312,7 +293,6 @@ public class InfoDataController {
 		}
 		findOne.setInfoTempleteId(infoPlan.getInfoTempleteId());
 		findOne.setName(infoPlan.getName());
-		/////infoPlan.setType("2");
 		return Optional.ofNullable(infoPlanRepository.save(infoPlan))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not save infoPlan "));

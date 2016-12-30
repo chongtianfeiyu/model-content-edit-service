@@ -38,6 +38,9 @@ public class SellerUser implements Serializable {
 
 	/** 店铺编号. */
 	private Long storeId;
+	
+	/** 物业ID. */
+	private String estateId;
 
 	/**
 	 * Constructor.
@@ -179,39 +182,29 @@ public class SellerUser implements Serializable {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Set the 物业ID.
+	 * 
+	 * @param estateId
+	 *            物业ID
 	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		return result;
+	public void setEstateId(String estateId) {
+		this.estateId = estateId;
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Get the 物业ID.
+	 * 
+	 * @return 物业ID
 	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		SellerUser other = (SellerUser) obj;
-		if (id == null) {
-			if (other.id != null) {
-				return false;
-			}
-		} else if (!id.equals(other.id)) {
-			return false;
-		}
-		return true;
+	public String getEstateId() {
+		return this.estateId;
 	}
 
+	@Override
+	public String toString() {
+		return "SellerUser [id=" + id + ", createTime=" + createTime + ", email=" + email + ", loginnum=" + loginnum
+				+ ", password=" + password + ", mobile=" + mobile + ", storeId=" + storeId + ", estateId=" + estateId
+				+ "]";
+	}
+	
 }
