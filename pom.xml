@@ -81,7 +81,7 @@
         </dependency>
         <dependency>
         	<groupId>com.zyhao</groupId>
-        	<artifactId>utils</artifactId>
+        	<artifactId>store-core</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
