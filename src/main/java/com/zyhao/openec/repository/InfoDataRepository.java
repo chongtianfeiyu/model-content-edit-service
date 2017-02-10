@@ -15,9 +15,9 @@ public interface InfoDataRepository extends PagingAndSortingRepository<InfoData,
 	
 	public List<InfoData> findByStoreIdAndInfoPlanId(Long storedId,String planId);
 
-	public List<InfoData> findByEstateId(String estateId);
+	public List<InfoData> findByUserId(String estateId);
 
-	public InfoData findByIdAndEstateId(Long id,String estateId);
+	public InfoData findByIdAndUserId(Long id,String estateId);
 
-	public List<InfoData> findByEstateIdAndInfoPlanId(String estateId, String planId);
+	public List<InfoData> findByUserIdAndInfoPlanId(String estateId, String planId);
 }

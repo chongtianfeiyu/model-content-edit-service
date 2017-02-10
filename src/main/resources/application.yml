@@ -21,7 +21,7 @@ security:
     client:
       client-id: acme
       access-token-uri: http://openec.zyhao.com:8788
-  ignored: /v1/**/noauth/**
+  ignored: /**
 eureka:
   instance:
     prefer-ip-address: true

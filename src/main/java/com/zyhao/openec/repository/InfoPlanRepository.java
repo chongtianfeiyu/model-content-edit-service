@@ -12,10 +12,10 @@ public interface InfoPlanRepository extends PagingAndSortingRepository<InfoPlan,
 
 	public InfoPlan findByIdAndStoreId(Long id, Long storeId);
 
-	public List<InfoPlan> findByEstateId(String estateId);
+	public List<InfoPlan> findByUserId(String estateId);
 
-	public InfoPlan findByIdAndEstateId(Long id, String estateId);
+	public InfoPlan findByIdAndUserId(Long id, String estateId);
 
-	public List<InfoPlan> findByEstateIdAndType(String estateId, String type);
+	public List<InfoPlan> findByUserIdAndType(String estateId, String type);
 
 }
