@@ -1,6 +1,9 @@
 package com.zyhao.openec.api.v1;
 
+import java.util.Map;
+
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -15,7 +18,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.zyhao.openec.entity.ActionPojo;
 import com.zyhao.openec.entity.InfoPlan;
-import com.zyhao.openec.entity.SellerUser;
 import com.zyhao.openec.repository.InfoDataRepository;
 import com.zyhao.openec.repository.InfoTempleteRepository;
 
@@ -38,6 +40,8 @@ public class InfoDataServiceV1 {
 	private InfoDataRepository infoDataRepository;
     @Resource
     private InfoTempleteRepository infoTempleteRepository;
+    @Autowired  
+    HttpServletRequest request;
     
     @Autowired
     public InfoDataServiceV1(
@@ -52,27 +56,31 @@ public class InfoDataServiceV1 {
      *
      * @return the currently authenticated user
      */
-    public SellerUser getAuthenticatedUser() {
-    	log.info("----------------------------------");
-        return oAuth2RestTemplate.getForObject("http://seller-service/saa/v1/me",SellerUser.class);
-    }
+//    public SellerUser getAuthenticatedUser() {
+//    	log.info("----------------------------------");
+//        return oAuth2RestTemplate.getForObject("http://seller-service/saa/v1/me",SellerUser.class);
+//    }
+ 
     
+	public Map<String,String[]> getAuthenticatedUser() {
+		return request.getParameterMap();
+	}
 	/**
      * 调用静态化的公共服务方法,生成首页静态模板文件
      * @param activeData
      * @return
      * @throws Exception
      */
-	public InfoPlan createStaticTemplateFileByCMD(InfoPlan activePlan) throws Exception{
+	public InfoPlan createStaticTemplateFileByCMD(HttpServletRequest request,InfoPlan activePlan) throws Exception{
 		
 		try{
-			SellerUser user = getAuthenticatedUser();
+			Map<String,String[]> user = getAuthenticatedUser();
 			
 			if(user == null){
 				log.error("createStaticTemplateFileByCMD method run failed ,no login");
 				//throw new Exception("no login");
 			}
-			log.info("createStaticTemplateFileByCMD run user is "+user.getId());
+			log.info("createStaticTemplateFileByCMD run user is "+user);
 		}catch(Exception ex){
 			ex.printStackTrace();
 			throw ex;
@@ -101,15 +109,15 @@ public class InfoDataServiceV1 {
 	 * @return
 	 * @throws Exception 
 	 */
-	public InfoPlan createTempStaticTemplateFileByCMD(InfoPlan infoplan) throws Exception {
+	public InfoPlan createTempStaticTemplateFileByCMD(HttpServletRequest request,InfoPlan infoplan) throws Exception {
 		try{
-			SellerUser user = getAuthenticatedUser();
+			Map<String,String[]> user = getAuthenticatedUser();
 			
-			if(user == null){
+			if(user.get("userId") == null){
 				log.error("createTempStaticTemplateFileByCMD method run failed ,no login");
 				//throw new Exception("no login");
 			}
-			log.info("createTempStaticTemplateFileByCMD run user is "+user.getId());
+			log.info("createTempStaticTemplateFileByCMD run user is "+user);
 		}catch(Exception ex){
 			ex.printStackTrace();
 			throw ex;

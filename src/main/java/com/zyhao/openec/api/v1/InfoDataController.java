@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -76,8 +77,12 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	@RequestMapping(path="/infodata/byInfoPlanId/{planId}",method = RequestMethod.GET)
 	public ResponseEntity<List<InfoData>> findByInfoPlanId(@PathVariable("planId") String planId) throws Exception {
 		logger.info("come into method findAllInfoData");
-		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		return Optional.ofNullable(infoDataRepository.findByUserIdAndInfoPlanId(authenticatedUser.getEstateId(),planId))
+		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		if(authenticatedUser.get("businessId") == null){
+			logger.error(authenticatedUser+"物业ID不能为空");
+			throw new Exception("物业ID不能为空");
+		}
+		return Optional.ofNullable(infoDataRepository.findByUserIdAndInfoPlanId(authenticatedUser.get("businessId")[0],planId))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
@@ -91,9 +96,13 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	@RequestMapping(path="/infodata/{id}",method = RequestMethod.GET)
 	public ResponseEntity<InfoData> findByTempId(@PathVariable("id") Long id) throws Exception {
 		logger.info("come into method findByTempId with params:id="+id);
-		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		
-		return Optional.ofNullable(infoDataRepository.findByIdAndUserId(id,authenticatedUser.getEstateId()))
+		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		String[] businessId = authenticatedUser.get("businessId");
+		if(businessId == null){
+			logger.error(authenticatedUser+"物业ID不能为空");
+			throw new Exception("物业ID不能为空");
+		}
+		return Optional.ofNullable(infoDataRepository.findByIdAndUserId(id,businessId[0]))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
@@ -128,11 +137,17 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	 */
 	@Transactional
 	@RequestMapping(path="/infodata/new",method=RequestMethod.POST)
-	public ResponseEntity<InfoData> saveInfoData(@Validated @RequestBody InfoData infoData) throws Exception {
+	public ResponseEntity<InfoData> saveInfoData(
+			@Validated @RequestBody InfoData infoData,
+			HttpServletRequest request) throws Exception {
 		logger.info("come into method saveInfoData with params: "+infoData.toString());
-		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		
-		infoData.setStoreId(authenticatedUser.getStoreId());
+		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		String[] storeId = authenticatedUser.get("storeId");
+		if(storeId == null){
+			logger.error(authenticatedUser+"小区ID不能为空");
+			throw new Exception("物业ID不能为空");
+		}
+		infoData.setStoreId(Long.valueOf(storeId[0]));
 		return Optional.ofNullable(infoDataRepository.save(infoData))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find a InfoData"));
@@ -224,8 +239,13 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	@RequestMapping(path="/plan/one/{id}",method=RequestMethod.GET)
 	public ResponseEntity findInfoPlan(@PathVariable("id") Long id) throws Exception {
 		logger.info("come into method findInfoPlan");
-		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		InfoPlan findByIdAndStoreId = infoPlanRepository.findByIdAndUserId(id,authenticatedUser.getEstateId());
+		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		String[] businessId = authenticatedUser.get("businessId");
+		if(businessId == null){
+			logger.error(authenticatedUser+"物业ID不能为空");
+			throw new Exception("物业ID不能为空");
+		}
+		InfoPlan findByIdAndStoreId = infoPlanRepository.findByIdAndUserId(id,businessId[0]);
 		InfoTemplate findOne = infoTempleteRepository.findOne(Long.valueOf(findByIdAndStoreId.getInfoTempleteId()));
 		Map<String,Object> map = new HashMap<String,Object>();
 		map.put("InfoPlan", findByIdAndStoreId);
@@ -243,8 +263,14 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	@RequestMapping(path="/plan/all",method=RequestMethod.GET)
 	public ResponseEntity findAllInfoPlan() throws Exception {
 		logger.info("come into method findAllInfoPlan");
-		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		List<InfoPlan> findByStoreId = infoPlanRepository.findByUserId(authenticatedUser.getEstateId());
+
+		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		String[] businessId = authenticatedUser.get("businessId");
+		if(businessId == null){
+			logger.error(authenticatedUser+"物业ID不能为空");
+			throw new Exception("物业ID不能为空");
+		}
+		List<InfoPlan> findByStoreId = infoPlanRepository.findByUserId(businessId[0]);
 		List<Map<String,Object>> list = new ArrayList<Map<String,Object>>();
 		for (InfoPlan infoPlan : findByStoreId) {
 			InfoTemplate findOne = infoTempleteRepository.findOne(Long.valueOf(infoPlan.getInfoTempleteId()));
@@ -267,9 +293,15 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 		logger.info("come into method saveInfoPlan");
 		infoPlan.setOutFileName("index.html");
 		infoPlan.setActive("0");
-		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-	
-		infoPlan.setStoreId(authenticatedUser.getStoreId());
+
+		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		String[] storeId = authenticatedUser.get("storeId");
+		if(storeId == null){
+			logger.error(authenticatedUser+"物业ID不能为空");
+			throw new Exception("物业ID不能为空");
+		}
+		
+		infoPlan.setStoreId(Long.valueOf(storeId[0]));
 		return Optional.ofNullable(infoPlanRepository.save(infoPlan))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not save infoPlan "));
@@ -300,7 +332,9 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	 */
 	@Transactional
 	@RequestMapping(path="/activePlan",method=RequestMethod.POST)
-	public ResponseEntity<InfoPlan> activePlan(@RequestBody InfoPlan infoplan) throws Exception {
+	public ResponseEntity<InfoPlan> activePlan(
+			@RequestBody InfoPlan infoplan,
+			HttpServletRequest request) throws Exception {
 		logger.info("activePlan method run params infoplan is "+infoplan.toString());
 		//1.找到激活的模板内容
 		List<InfoPlan> findAll = null;
@@ -322,7 +356,7 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 		//2.静态化处理 模板名称,模板数据,输出路径
 		try{
 			//infoplan = infoDataServiceV1.createStaticTemplateFile(infoplan);
-			infoplan = infoDataServiceV1.createStaticTemplateFileByCMD(infoplan);
+			infoplan = infoDataServiceV1.createStaticTemplateFileByCMD(request,infoplan);
 		}catch(Exception ex){
 			ex.printStackTrace();
 			throw ex;
@@ -335,7 +369,9 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	 */
 	@Transactional
 	@RequestMapping(path="/showPlan",method=RequestMethod.POST)
-	public ResponseEntity<InfoPlan> showPlan(@RequestBody InfoPlan infoplan) throws Exception {
+	public ResponseEntity<InfoPlan> showPlan(
+			@RequestBody InfoPlan infoplan,
+			HttpServletRequest request) throws Exception {
 		logger.info("showPlan method run params infoplan is "+infoplan.toString());
 		//1.找到激活的模板内容
 		
@@ -352,7 +388,7 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 		}
 		try{
 			//infoplan = infoDataServiceV1.createStaticTemplateFile(infoplan);
-			infoplan = infoDataServiceV1.createTempStaticTemplateFileByCMD(infoplan);
+			infoplan = infoDataServiceV1.createTempStaticTemplateFileByCMD(request,infoplan);
 		}catch(Exception ex){
 			ex.printStackTrace();
 			throw ex;
