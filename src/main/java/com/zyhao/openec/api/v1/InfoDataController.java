@@ -111,27 +111,6 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
 	
-//	/**
-//	 * 创建店铺内容
-//	 * @param infoDate
-//	 * @return
-//	 * @throws Exception
-//	 *TODO 版本号获取及规则是否向上兼容 || 认证
-//	 */
-//	@Transactional
-//	@RequestMapping(path="/infodata/new",method=RequestMethod.POST)
-//	public ResponseEntity<InfoData> saveInfoData(@Validated @RequestBody InfoData infoData) throws Exception {
-//		logger.info("come into method saveInfoData with params: "+infoData.toString());
-//		infoData.setType("2");//类型1-平台，2-商店
-//		SellerUser authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-//		infoData.setEstateId(authenticatedUser.getEstateId());
-//		infoData.setUserId(""+authenticatedUser.getId());
-//		infoData.setStoreId(authenticatedUser.getStoreId());
-//		return Optional.ofNullable(infoDataRepository.save(infoData))
-//	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
-//	                .orElseThrow(() -> new Exception("Could not find a InfoData"));
-//	}
-	
 	/**
 	 * 创建物业内容
 	 * @param infoDate
@@ -153,29 +132,48 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 		}
 		infoData.setType("2");
 		infoData.setUserId(Session_businessId[0]);
-		return Optional.ofNullable(infoDataRepository.save(infoData))
+		
+		InfoData save = infoDataRepository.save(infoData);
+		try{
+		    activePlan(infoPlanRepository.findOne(Long.valueOf(infoData.getInfoPlanId())),request);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return Optional.ofNullable(save)
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find a InfoData"));
 	}
 	
+	
 	/**
-	 * 修改
+	 * 物业内容
 	 * @param infoDate
 	 * @return
 	 * @throws Exception
 	 *TODO 版本号获取及规则是否向上兼容 || 认证
 	 */
 	@Transactional
-	@RequestMapping(path="/infodata/update",method=RequestMethod.POST)
-	public ResponseEntity<InfoData> updateInfoData(@Validated @RequestBody InfoData infoDate) throws Exception {
-		logger.info("come into method updateInfoData with params: "+infoDate.toString());
-		
-		InfoData findOne = infoDataRepository.findOne(infoDate.getId());
-		if(findOne == null){
-			logger.error("come into method updateInfoData update info data error,cannot find data"+infoDate.toString());
-			throw new Exception("Could not find a InfoData");
+	@RequestMapping(path="/infodata/status",method=RequestMethod.POST)
+	public ResponseEntity<InfoData> updateInfoData(
+			@Validated @RequestBody InfoData infoData,
+			HttpServletRequest request) throws Exception {
+		logger.info("come into method saveInfoData with params: "+infoData.toString());
+		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		String[] Session_businessId = authenticatedUser.get("Session_businessId");
+		if(Session_businessId == null){
+			logger.error(authenticatedUser+"小区ID不能为空");
+			throw new Exception("物业ID不能为空");
 		}
-		return Optional.ofNullable(infoDataRepository.save(infoDate))
+		infoData.setType("2");
+		infoData.setUserId(Session_businessId[0]);
+		InfoData save = infoDataRepository.save(infoData);
+		try{
+		    activePlan(infoPlanRepository.findOne(Long.valueOf(infoData.getInfoPlanId())),request);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return Optional.ofNullable(save)
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find a InfoData"));
 	}
