@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
@@ -24,11 +25,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.zyhao.openec.api.v1.InfoDataServiceV1;
 import com.zyhao.openec.entity.InfoData;
 import com.zyhao.openec.entity.InfoPlan;
 import com.zyhao.openec.entity.InfoTemplate;
-import com.zyhao.openec.entity.SellerUser;
 import com.zyhao.openec.repository.InfoDataRepository;
 import com.zyhao.openec.repository.InfoPlanRepository;
 import com.zyhao.openec.repository.InfoTempleteRepository;
@@ -60,11 +59,15 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	 * @return
 	 */
 	@Transactional
-	@RequestMapping(path="/infodata/all/{businessId}",method = RequestMethod.GET)
-	public ResponseEntity<List<InfoData>> findAllInfoData(@PathVariable("businessId") String businessId) throws Exception {
+	@RequestMapping(path="/infodata/all",method = RequestMethod.GET)
+	public ResponseEntity<List<InfoData>> findAllInfoData() throws Exception {
 		logger.info("come into method findAllInfoData");
-		
-		return Optional.ofNullable(infoDataRepository.findByUserId(businessId))
+		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		if(authenticatedUser.get("Session_businessId") == null){
+			logger.error(authenticatedUser+"物业ID不能为空");
+			throw new Exception("物业ID不能为空");
+		}
+		return Optional.ofNullable(infoDataRepository.findByUserId(authenticatedUser.get("Session_businessId")[0]))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
@@ -78,11 +81,11 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	public ResponseEntity<List<InfoData>> findByInfoPlanId(@PathVariable("planId") String planId) throws Exception {
 		logger.info("come into method findAllInfoData");
 		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		if(authenticatedUser.get("businessId") == null){
+		if(authenticatedUser.get("Session_businessId") == null){
 			logger.error(authenticatedUser+"物业ID不能为空");
 			throw new Exception("物业ID不能为空");
 		}
-		return Optional.ofNullable(infoDataRepository.findByUserIdAndInfoPlanId(authenticatedUser.get("businessId")[0],planId))
+		return Optional.ofNullable(infoDataRepository.findByUserIdAndInfoPlanId(authenticatedUser.get("Session_businessId")[0],planId))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
@@ -97,7 +100,7 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	public ResponseEntity<InfoData> findByTempId(@PathVariable("id") Long id) throws Exception {
 		logger.info("come into method findByTempId with params:id="+id);
 		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		String[] businessId = authenticatedUser.get("businessId");
+		String[] businessId = authenticatedUser.get("Session_businessId");
 		if(businessId == null){
 			logger.error(authenticatedUser+"物业ID不能为空");
 			throw new Exception("物业ID不能为空");
@@ -240,7 +243,7 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	public ResponseEntity findInfoPlan(@PathVariable("id") Long id) throws Exception {
 		logger.info("come into method findInfoPlan");
 		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		String[] businessId = authenticatedUser.get("businessId");
+		String[] businessId = authenticatedUser.get("Session_businessId");
 		if(businessId == null){
 			logger.error(authenticatedUser+"物业ID不能为空");
 			throw new Exception("物业ID不能为空");
@@ -265,7 +268,7 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 		logger.info("come into method findAllInfoPlan");
 
 		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		String[] businessId = authenticatedUser.get("businessId");
+		String[] businessId = authenticatedUser.get("Session_businessId");
 		if(businessId == null){
 			logger.error(authenticatedUser+"物业ID不能为空");
 			throw new Exception("物业ID不能为空");

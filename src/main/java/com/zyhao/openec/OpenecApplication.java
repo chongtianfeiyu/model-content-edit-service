@@ -8,11 +8,6 @@ import org.springframework.cloud.netflix.hystrix.EnableHystrix;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.security.oauth2.client.OAuth2ClientContext;
-import org.springframework.security.oauth2.client.OAuth2RestTemplate;
-import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -26,8 +21,8 @@ import org.springframework.web.client.RestTemplate;
 @EnableJpaRepositories
 @EnableJpaAuditing
 @EnableEurekaClient
-@EnableResourceServer
-@EnableOAuth2Client  // 有需要访问其他需要认证的接口时使用
+//@EnableResourceServer
+//@EnableOAuth2Client  // 有需要访问其他需要认证的接口时使用
 @EnableHystrix
 public class OpenecApplication {
     public static void main(String[] args) {
@@ -43,16 +38,8 @@ public class OpenecApplication {
      */
     @LoadBalanced
     @Bean
-    public OAuth2RestTemplate loadBalancedOauth2RestTemplate(
-            OAuth2ProtectedResourceDetails resource, OAuth2ClientContext context) {
-        return new OAuth2RestTemplate(resource, context);
-    }
-
-    @LoadBalanced
-    @Bean(name = "normalRestTemplate")
     public RestTemplate loadBalancedRestTemplate() {
         return new RestTemplate();
     }
-
 
 }

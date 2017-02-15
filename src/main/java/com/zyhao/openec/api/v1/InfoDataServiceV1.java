@@ -12,7 +12,6 @@ import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -34,7 +33,6 @@ import com.zyhao.openec.repository.InfoTempleteRepository;
 public class InfoDataServiceV1 {
 
     private final Log log = LogFactory.getLog(InfoDataServiceV1.class);
-    private OAuth2RestTemplate oAuth2RestTemplate;
     private RestTemplate restTemplate;
     @Resource
 	private InfoDataRepository infoDataRepository;
@@ -45,9 +43,7 @@ public class InfoDataServiceV1 {
     
     @Autowired
     public InfoDataServiceV1(
-                                 @LoadBalanced OAuth2RestTemplate oAuth2RestTemplate,
-                                 @LoadBalanced RestTemplate normalRestTemplate) {
-        this.oAuth2RestTemplate = oAuth2RestTemplate;
+    		@LoadBalanced RestTemplate normalRestTemplate) {
         this.restTemplate = normalRestTemplate;
     }
 
