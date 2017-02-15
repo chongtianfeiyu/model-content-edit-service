@@ -61,12 +61,13 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	@Transactional
 	@RequestMapping(path="/infodata/all",method = RequestMethod.GET)
 	public ResponseEntity<List<InfoData>> findAllInfoData() throws Exception {
-		logger.info("come into method findAllInfoData");
+	
 		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
 		if(authenticatedUser.get("Session_businessId") == null){
 			logger.error(authenticatedUser+"物业ID不能为空");
 			throw new Exception("物业ID不能为空");
 		}
+		logger.info("come into method findAllInfoData Session_businessId="+authenticatedUser.get("Session_businessId")[0]);
 		return Optional.ofNullable(infoDataRepository.findByUserId(authenticatedUser.get("Session_businessId")[0]))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
