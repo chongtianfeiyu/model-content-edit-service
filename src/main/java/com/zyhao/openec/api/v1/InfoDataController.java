@@ -146,12 +146,13 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 			HttpServletRequest request) throws Exception {
 		logger.info("come into method saveInfoData with params: "+infoData.toString());
 		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		String[] storeId = authenticatedUser.get("storeId");
-		if(storeId == null){
+		String[] Session_businessId = authenticatedUser.get("Session_businessId");
+		if(Session_businessId == null){
 			logger.error(authenticatedUser+"小区ID不能为空");
 			throw new Exception("物业ID不能为空");
 		}
-		infoData.setStoreId(Long.valueOf(storeId[0]));
+		infoData.setType("2");
+		infoData.setUserId(Session_businessId[0]);
 		return Optional.ofNullable(infoDataRepository.save(infoData))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find a InfoData"));
@@ -299,13 +300,13 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 		infoPlan.setActive("0");
 
 		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
-		String[] storeId = authenticatedUser.get("storeId");
-		if(storeId == null){
+		String[] Session_businessId = authenticatedUser.get("Session_businessId");
+		if(Session_businessId == null){
 			logger.error(authenticatedUser+"物业ID不能为空");
 			throw new Exception("物业ID不能为空");
 		}
 		
-		infoPlan.setStoreId(Long.valueOf(storeId[0]));
+		infoPlan.setStoreId(Long.valueOf(Session_businessId[0]));
 		return Optional.ofNullable(infoPlanRepository.save(infoPlan))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not save infoPlan "));
