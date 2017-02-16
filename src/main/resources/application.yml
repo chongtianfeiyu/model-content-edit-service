@@ -20,7 +20,7 @@ security:
       userInfoUri: http://user.openec.zyhao.com:8282/saa/user
     client:
       client-id: acme
-      access-token-uri: http://openec.zyhao.com:8788
+      access-token-uri: http://user.openec.zyhao.com:8788
   ignored: /**
 eureka:
   instance:
@@ -29,7 +29,7 @@ eureka:
     registerWithEureka: true
     fetchRegistry: true
     serviceUrl:
-      defaultZone: http://openec.zyhao.com:8761/eureka/
+      defaultZone: http://discovery.openec.zyhao.com:8761/eureka/
 ---
 spring:
   profiles: docker
