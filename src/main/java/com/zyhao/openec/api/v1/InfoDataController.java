@@ -165,15 +165,17 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 			logger.error(authenticatedUser+"小区ID不能为空");
 			throw new Exception("物业ID不能为空");
 		}
-		infoData.setType("2");
-		infoData.setUserId(Session_businessId[0]);
-		InfoData save = infoDataRepository.save(infoData);
+		
+		InfoData findOne = infoDataRepository.findOne(infoData.getId());
+		findOne.setType("2");
+		findOne.setStatus(infoData.getStatus());
+		findOne = infoDataRepository.save(findOne);
 		try{
-		    activePlan(infoPlanRepository.findOne(Long.valueOf(infoData.getInfoPlanId())),request);
+		    activePlan(infoPlanRepository.findOne(Long.valueOf(findOne.getInfoPlanId())),request);
 		}catch(Exception e){
 			e.printStackTrace();
 		}
-		return Optional.ofNullable(save)
+		return Optional.ofNullable(findOne)
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find a InfoData"));
 	}
