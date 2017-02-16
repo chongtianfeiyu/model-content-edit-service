@@ -133,6 +133,33 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 		infoData.setType("2");
 		infoData.setUserId(Session_businessId[0]);
 		
+		if(infoData.getId() != null){
+			InfoData findOne = infoDataRepository.findOne(infoData.getId());
+			findOne.setUserId("");
+			if(infoData.getData() != null){
+				findOne.setData(infoData.getData());
+			}
+			if(infoData.getHref() != null){
+				findOne.setHref(infoData.getHref());
+			}
+			if(infoData.getName() != null){
+				findOne.setName(infoData.getName());
+			}
+			if(infoData.getPath() != null){
+				findOne.setPath(infoData.getPath());
+			}
+			if(infoData.getPath() != null){
+				findOne.setSort(infoData.getSort());
+			}
+			if(infoData.getStatus() != null){
+				findOne.setStatus(infoData.getStatus());
+			}
+			findOne.setType("2");
+			findOne.setUserId(Session_businessId[0]);
+			
+			infoData = findOne;
+		}
+		
 		InfoData save = infoDataRepository.save(infoData);
 		try{
 		    activePlan(infoPlanRepository.findOne(Long.valueOf(infoData.getInfoPlanId())),request);
