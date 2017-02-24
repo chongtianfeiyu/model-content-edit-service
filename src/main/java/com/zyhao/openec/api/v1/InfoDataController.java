@@ -14,6 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.zyhao.openec.entity.InfoData;
 import com.zyhao.openec.entity.InfoPlan;
 import com.zyhao.openec.entity.InfoTemplate;
+import com.zyhao.openec.entity.RepEntity;
 import com.zyhao.openec.repository.InfoDataRepository;
 import com.zyhao.openec.repository.InfoPlanRepository;
 import com.zyhao.openec.repository.InfoTempleteRepository;
@@ -52,8 +54,9 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	private InfoPlanRepository infoPlanRepository;
 	@Resource
 	private InfoTempleteRepository infoTempleteRepository;
-
-	
+    private static String active_1 = "1";//0-不激活 1-激活
+    private static String type_2 = "2";//1-平台2-商店
+    private static String status_1 = "1";//1-有效 -1无效
 	/**
 	 * 查询所有物业下的内容
 	 * @return
@@ -61,14 +64,15 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	@Transactional
 	@RequestMapping(path="/infodata/all",method = RequestMethod.GET)
 	public ResponseEntity<List<InfoData>> findAllInfoData() throws Exception {
-	
+		Sort sort = new Sort(Sort.Direction.ASC, "sort");
+		
 		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
 		if(authenticatedUser.get("Session_businessId") == null){
 			logger.error(authenticatedUser+"物业ID不能为空");
 			throw new Exception("物业ID不能为空");
 		}
 		logger.info("come into method findAllInfoData Session_businessId="+authenticatedUser.get("Session_businessId")[0]);
-		return Optional.ofNullable(infoDataRepository.findByUserId(authenticatedUser.get("Session_businessId")[0]))
+		return Optional.ofNullable(infoDataRepository.findByUserId(authenticatedUser.get("Session_businessId")[0],sort))
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find InfoData list"));
 	}
@@ -130,12 +134,24 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 			logger.error(authenticatedUser+"小区ID不能为空");
 			throw new Exception("物业ID不能为空");
 		}
-		infoData.setType("2");
+		infoData.setType(type_2);
 		infoData.setUserId(Session_businessId[0]);
+		
+		List<InfoPlan> findByUserId = infoPlanRepository.findByUserId(Session_businessId[0]);
+		if(findByUserId != null && findByUserId.size() == 1){
+			infoData.setInfoPlanId(""+findByUserId.get(0).getId());
+		}else{
+			for(InfoPlan pl : findByUserId){
+				if(active_1.equals(pl.getActive())){//0-不激活 1-激活
+					infoData.setInfoPlanId(""+pl.getId());
+					break;
+				}
+			}
+		}
 		
 		if(infoData.getId() != null){
 			InfoData findOne = infoDataRepository.findOne(infoData.getId());
-			findOne.setUserId("");
+			findOne.setUserId(Session_businessId[0]);
 			if(infoData.getData() != null){
 				findOne.setData(infoData.getData());
 			}
@@ -148,24 +164,44 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 			if(infoData.getPath() != null){
 				findOne.setPath(infoData.getPath());
 			}
-			if(infoData.getPath() != null){
+			if(infoData.getSort() != null){
 				findOne.setSort(infoData.getSort());
 			}
-			if(infoData.getStatus() != null){
+			if(infoData.getStatus() != null&&infoData.getStatus() != ""){
 				findOne.setStatus(infoData.getStatus());
 			}
-			findOne.setType("2");
+			if(findOne.getInfoPlanId() == null || findOne.getInfoPlanId() == ""){
+				findOne.setInfoPlanId(infoData.getInfoPlanId());
+			}
+			
+			findOne.setType(type_2);
 			findOne.setUserId(Session_businessId[0]);
 			
+			
+			
+			
 			infoData = findOne;
+		}else{
+			
+			Long sort = 1L;
+			sort = infoDataRepository.getMaxSortByUserIdAndType(Session_businessId[0],type_2);
+			if(sort == null){
+				sort = 1L;
+			}
+			infoData.setSort(sort.intValue()+1);
+			if(infoData.getStatus() == null || infoData.getStatus()==""){
+				infoData.setStatus(status_1);
+			}
+			
+			infoData.setUserId(Session_businessId[0]);
 		}
 		
 		InfoData save = infoDataRepository.save(infoData);
-		try{
-		    activePlan(infoPlanRepository.findOne(Long.valueOf(infoData.getInfoPlanId())),request);
-		}catch(Exception e){
-			e.printStackTrace();
-		}
+//		try{
+//		    activePlan(infoPlanRepository.findOne(Long.valueOf(infoData.getInfoPlanId())),request);
+//		}catch(Exception e){
+//			e.printStackTrace();
+//		}
 		
 		return Optional.ofNullable(save)
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
@@ -194,14 +230,10 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 		}
 		
 		InfoData findOne = infoDataRepository.findOne(infoData.getId());
-		findOne.setType("2");
+		findOne.setType(type_2);
 		findOne.setStatus(infoData.getStatus());
 		findOne = infoDataRepository.save(findOne);
-		try{
-		    activePlan(infoPlanRepository.findOne(Long.valueOf(findOne.getInfoPlanId())),request);
-		}catch(Exception e){
-			e.printStackTrace();
-		}
+
 		return Optional.ofNullable(findOne)
 	                .map(varname -> new ResponseEntity<>(varname, HttpStatus.OK))
 	                .orElseThrow(() -> new Exception("Could not find a InfoData"));
@@ -212,10 +244,30 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	 * TODO 认证
 	 */
 	@Transactional
-	@RequestMapping(path="/infodata/del/{id}",method=RequestMethod.DELETE)
-	public ResponseEntity<InfoData> deleteModelContent(@PathVariable("id") Long id) throws Exception {
-		infoDataRepository.delete(id);
-		return new ResponseEntity<InfoData>(HttpStatus.OK);
+	@RequestMapping(path="/infodata/del/{id}",method=RequestMethod.GET)
+	public ResponseEntity<RepEntity> deleteModelContent(@PathVariable("id") Long id) throws Exception {
+		
+		Map<String,String[]> authenticatedUser = infoDataServiceV1.getAuthenticatedUser();
+		String[] Session_businessId = authenticatedUser.get("Session_businessId");
+		String[] userId = authenticatedUser.get("Session_userId");
+		
+		if(Session_businessId == null){
+			logger.error(authenticatedUser+"小区ID不能为空");
+			throw new Exception("物业ID不能为空");
+		}
+		logger.info("deleteModelContent id="+id+"userId="+userId[0]+" Session_businessId = "+Session_businessId[0]);
+		Long l = infoDataRepository.deleteByIdAndUserId(id,Session_businessId[0]);
+		RepEntity rep = new RepEntity();
+		if(l >=0){
+			rep.setStatus("0");
+			rep.setMsg("success");
+			rep.setData(l);
+		}else{
+			rep.setStatus("-1");
+			rep.setMsg("error");
+			rep.setData(l);
+		}
+		return new ResponseEntity<RepEntity>(rep,HttpStatus.OK);
 	}
 	
 	/**
@@ -224,8 +276,13 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 	 */
 	@Transactional
 	@RequestMapping(path="/infodata/batchUpdate",method=RequestMethod.POST)
-	public ResponseEntity updateBatchInfoData(@Validated @RequestBody List<InfoData> infoData) throws Exception {
+	public ResponseEntity<RepEntity> updateBatchInfoData(@Validated @RequestBody List<InfoData> infoData) throws Exception {
 		logger.info("come into method updateBatchInfoData with params: "+infoData.toString());
+		
+		RepEntity rep = new RepEntity();
+		rep.setStatus("0");
+		rep.setMsg("success");
+		
 		for (InfoData data : infoData) {
 			InfoData findOne = infoDataRepository.findOne(data.getId());
 			if(findOne == null){
@@ -249,7 +306,8 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 			}
 			infoDataRepository.save(findOne);
 		}
-		return new ResponseEntity<>(HttpStatus.OK);
+		
+		return new ResponseEntity<RepEntity>(rep,HttpStatus.OK);
 	}
 	
 	
@@ -372,15 +430,23 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 		List<InfoPlan> findAll = null;
 		if(infoplan.getStoreId() != null){
 			findAll = infoPlanRepository.findByStoreId(infoplan.getStoreId());
-		}else{
+		}else if(infoplan.getUserId() != null && infoplan.getType() != null){
 			findAll = infoPlanRepository.findByUserIdAndType(""+infoplan.getUserId(),infoplan.getType());
+		}else{
+			String userId = infoDataServiceV1.getAuthenticatedUser().get("Session_businessId")[0];
+			findAll = infoPlanRepository.findByUserIdAndType(userId,type_2);
 		}
-		for (InfoPlan plan : findAll) {
-			if(infoplan.getId() != null && !infoplan.getId().equals(plan.getId())){
-				plan.setActive("0");//是否激活-1-禁用  0-不激活，1-激活（只能激活一个
-			}else{
-				plan.setActive("1");//是否激活-1-禁用  0-不激活，1-激活（只能激活一个
-				infoplan = plan;
+		if(findAll != null && findAll.size() == 1){
+			findAll.get(0).setActive("0");
+			infoplan = findAll.get(0);
+		}else{
+			for (InfoPlan plan : findAll) {
+				if(infoplan.getId() != null && !infoplan.getId().equals(plan.getId())){
+					plan.setActive("0");//是否激活-1-禁用  0-不激活，1-激活（只能激活一个
+				}else{
+					plan.setActive("1");//是否激活-1-禁用  0-不激活，1-激活（只能激活一个
+					infoplan = plan;
+				}
 			}
 		}
 		infoPlanRepository.save(findAll);
@@ -406,18 +472,20 @@ private Log logger = LogFactory.getLog(InfoDataController.class);
 			HttpServletRequest request) throws Exception {
 		logger.info("showPlan method run params infoplan is "+infoplan.toString());
 		//1.找到激活的模板内容
-		
-		//2.静态化处理 模板名称,模板数据,输出路径
 		List<InfoPlan> findAll = null;
 		if(infoplan.getStoreId() != null){
 			findAll = infoPlanRepository.findByStoreId(infoplan.getStoreId());
-		}else{
+		}else if(infoplan.getUserId() != null && infoplan.getType() != null){
 			findAll = infoPlanRepository.findByUserIdAndType(""+infoplan.getUserId(),infoplan.getType());
+		}else{
+			String userId = infoDataServiceV1.getAuthenticatedUser().get("Session_businessId")[0];
+			findAll = infoPlanRepository.findByUserIdAndType(userId,type_2);
 		}
-		logger.info("showPlan method active activeData is "+findAll.toString());
-		if(infoplan.getId() == null && infoplan.getUserId() != null && findAll != null){//激活指定商户
+		if(findAll != null && findAll.size() == 1){
 			infoplan = findAll.get(0);
 		}
+		//2.静态化处理 模板名称,模板数据,输出路径
+		
 		try{
 			//infoplan = infoDataServiceV1.createStaticTemplateFile(infoplan);
 			infoplan = infoDataServiceV1.createTempStaticTemplateFileByCMD(request,infoplan);
